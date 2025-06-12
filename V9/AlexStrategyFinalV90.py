@@ -417,6 +417,8 @@ class AlexStrategyFinalV9(IStrategy):
         if dataframe is None or dataframe.empty:
             return self.leverage_value  # Fallback to default leverage
 
+        dataframe['atr'] = ta.ATR(dataframe, timeperiod=14)
+        
         # Get the latest ATR value from the last candle
         atr = dataframe['atr'].iat[-1]  # Get the ATR of the most recent candle
     
