@@ -62,6 +62,7 @@ cp torch/PyTorchLSTMRegressor.py "$FREQT_TRADE_DATA_DIR/user_data/freqaimodels/"
 # 复制策略相关文件到策略目录
 cp V8/1HOUR/AlexStrategyFinalV8.py "$FREQT_TRADE_DATA_DIR/user_data/strategies/"
 cp V8/1HOUR/AlexStrategyFinalV8Hyper.py "$FREQT_TRADE_DATA_DIR/user_data/strategies/"
+cp V8/1HOUR/config-torch.json "$FREQT_TRADE_DATA_DIR/user_data/"
 
 # 检查复制结果
 if [ $? -eq 0 ]; then

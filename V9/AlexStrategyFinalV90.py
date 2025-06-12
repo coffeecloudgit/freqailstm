@@ -408,8 +408,12 @@ class AlexStrategyFinalV9(IStrategy):
         Dynamically adjust leverage based on volatility (ATR).
         """
         # Get the analyzed dataframe for the pair and timeframe
-        dataframe = self.dp.get_analyzed_dataframe(pair, self.timeframe)
-    
+        result = self.dp.get_analyzed_dataframe(pair, self.timeframe)
+        if isinstance(result, tuple):
+            dataframe, _ = result
+        else:
+            dataframe = result
+        
         if dataframe is None or dataframe.empty:
             return self.leverage_value  # Fallback to default leverage
 
