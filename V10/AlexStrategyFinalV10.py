@@ -77,7 +77,8 @@ class AlexStrategyFinalV10(IStrategy):
     process_only_new_candles = True
     use_custom_stoploss = True
 
-    startup_candle_count = 20
+    startup_candle_count = 100
+    leverage_value = 5.0
                                                 
     prediction_metrics_storage = []  # Class-level storage for all pairs
 
@@ -559,3 +560,6 @@ class AlexStrategyFinalV10(IStrategy):
         columns_to_keep = [col for col in dataframe.columns if not col.startswith("%") or col in important_features]
         
         return dataframe[columns_to_keep]
+    
+    def leverage(self, pair: str, current_time: 'datetime', current_rate: float, proposed_leverage: float, **kwargs) -> float:
+        return self.leverage_value
