@@ -22,10 +22,12 @@ git clone https://github.com/coffeecloudgit/freqailstm.git
 
 ```shell 
 #!/bin/bash
-
+cd /opt/raid0/ft/
 # 定义频率交易相关目录变量（请替换为实际路径）
 FREQT_TRADE_SRC_DIR="/opt/raid0/ft/freqtrade"
 FREQT_TRADE_DATA_DIR="/opt/raid0/ft/gpu001"
+
+mkdir FREQT_TRADE_DATA_DIR
 
 # 确保变量已定义
 if [ -z "$FREQT_TRADE_SRC_DIR" ] || [ -z "$FREQT_TRADE_DATA_DIR" ]; then
@@ -58,11 +60,8 @@ cp torch/PyTorchModelTrainer.py "$FREQT_TRADE_SRC_DIR/freqtrade/freqai/torch/"
 cp torch/PyTorchLSTMRegressor.py "$FREQT_TRADE_DATA_DIR/user_data/freqaimodels/"
 
 # 复制策略相关文件到策略目录
-cp V8/1HOUR/AlexStrategyFinalV8.json "$FREQT_TRADE_DATA_DIR/user_data/strategies/"
 cp V8/1HOUR/AlexStrategyFinalV8.py "$FREQT_TRADE_DATA_DIR/user_data/strategies/"
-cp V8/1HOUR/AlexStrategyFinalV8Hyper.json "$FREQT_TRADE_DATA_DIR/user_data/strategies/"
 cp V8/1HOUR/AlexStrategyFinalV8Hyper.py "$FREQT_TRADE_DATA_DIR/user_data/strategies/"
-cp V8/1HOUR/config-torch.json "$FREQT_TRADE_DATA_DIR/user_data/"
 
 # 检查复制结果
 if [ $? -eq 0 ]; then
