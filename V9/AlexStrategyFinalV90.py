@@ -307,8 +307,15 @@ class AlexStrategyFinalV9(IStrategy):
 
 
         # Get Final Target Score to incorporate new calculations
-        dataframe['T'] = dataframe['S'] * dataframe['R'] * dataframe['R2'] * dataframe['V'] * dataframe['V2']
-
+        #dataframe['T'] = dataframe['S'] * dataframe['R'] * dataframe['R2'] * dataframe['V'] * dataframe['V2']
+        # 修改目标值计算方式
+        dataframe['T'] = (
+            dataframe['S'] * 0.4 +  # 技术指标得分
+            dataframe['R'] * 0.2 +  # 市场状态
+            dataframe['R2'] * 0.2 + # 长期趋势
+            dataframe['V'] * 0.1 +  # 波动率
+            dataframe['V2'] * 0.1   # ATR波动率
+        )
         # Assign the target score T to the AI target column
         target_horizon = 1  # Define your prediction horizon here
         dataframe['&-target'] = dataframe['T'].shift(-target_horizon)
@@ -331,12 +338,14 @@ class AlexStrategyFinalV9(IStrategy):
         enter_long_conditions = [
             df["do_predict"] == 1,
             df['&-target'] > self.threshold_buy.value,  #
+            df['&-target'] > 0,
             df['volume'] > 0
         ]
 
         enter_short_conditions = [
             df["do_predict"] == 1,
             df['&-target'] < self.threshold_sell.value,
+            df['&-target'] < 0,
             df["volume"] > 0
 
         ]
@@ -418,7 +427,7 @@ class AlexStrategyFinalV9(IStrategy):
             return self.leverage_value  # Fallback to default leverage
 
         dataframe['atr'] = ta.ATR(dataframe, timeperiod=14)
-        
+
         # Get the latest ATR value from the last candle
         atr = dataframe['atr'].iat[-1]  # Get the ATR of the most recent candle
     
