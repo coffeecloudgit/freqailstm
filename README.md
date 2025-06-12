@@ -22,7 +22,6 @@ git clone https://github.com/coffeecloudgit/freqailstm.git
 
 ```shell 
 #!/bin/bash
-cd /opt/raid0/ft/
 # 定义频率交易相关目录变量（请替换为实际路径）
 FREQT_TRADE_SRC_DIR="/opt/raid0/ft/freqtrade"
 FREQT_TRADE_DATA_DIR="/opt/raid0/ft/gpu001"
@@ -39,6 +38,7 @@ fi
 echo "检查并生成user_data目录结构..."
 cd "$FREQT_TRADE_DATA_DIR" || { echo "错误：数据目录不存在"; exit 1; }
 if [ ! -d "user_data" ]; then
+    cd FREQT_TRADE_DATA_DIR
     freqtrade create-userdir --userdir user_data
     if [ $? -ne 0 ]; then
         echo "警告：无法通过freqtrade命令创建目录，将手动创建..."
@@ -50,7 +50,7 @@ fi
 
 # 打印执行信息
 echo "开始复制文件到Freqtrade目录..."
-
+cd cd /opt/raid0/ft/freqailstm
 # 复制Torch模型相关文件到源码目录
 cp torch/BasePyTorchModel.py "$FREQT_TRADE_SRC_DIR/freqtrade/freqai/base_models/"
 cp torch/PyTorchLSTMModel.py "$FREQT_TRADE_SRC_DIR/freqtrade/freqai/torch/"
