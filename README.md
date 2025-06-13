@@ -79,7 +79,7 @@ fi
 ```shell
 freqtrade download-data -c user_data/config-torch.json --timerange 20230101-20250611 --timeframe 15m 1h 2h 4h 1d --erase
 
-freqtrade backtesting -c user_data/config-torch.json --breakdown day week month --timerange 20250301-20250611
+freqtrade backtesting -c user_data/config-torch.json --breakdown day week month --timerange 20250301-20250611 2>&1 | tee user_data/backtest_res001.txt
 
 freqtrade trade --strategy AlexStrategyFinalV8 --config user_data/config-torch.json --freqaimodel PyTorchLSTMRegressor
 ```
