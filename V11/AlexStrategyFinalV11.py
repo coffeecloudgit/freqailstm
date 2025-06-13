@@ -393,7 +393,7 @@ class AlexStrategyFinalV11(IStrategy):
         )
 
         stoploss_buffer = atr * atr_multiplier
-        max_loss_pct = min(0.12 + historical_volatility, 0.24) * self.max_risk_per_trade_multiplier.value
+        max_loss_pct = min(0.5 + historical_volatility, 1.0) * self.max_risk_per_trade_multiplier.value
 
         dynamic_stoploss = current_rate + stoploss_buffer if trade.is_short else current_rate - stoploss_buffer
         
