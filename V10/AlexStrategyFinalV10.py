@@ -59,7 +59,10 @@ class AlexStrategyFinalV10(IStrategy):
 
     # ROI table:
     minimal_roi = {
-        "0": 1  # we let the model decide when to exit
+        "0": 0.239,
+        "79": 0.058,
+        "231": 0.029,
+        "543": 0
     }
 
     # Stoploss:
