@@ -59,12 +59,13 @@ class AlexStrategyFinalV10(IStrategy):
 
     # ROI table:
     minimal_roi = {
-        "0": 0.239,
-        "79": 0.058,
-        "231": 0.029,
-        "543": 0
+        "0": 0.439,    # 0分钟后，目标利润43.9%
+        "79": 0.088,   # 79分钟后，目标利润8.8%
+        "231": 0.049,  # 231分钟后，目标利润4.9%
+        "543": 0       # 543分钟后，目标利润0%
     }
-
+    
+    leverage_value = 5.0
     # Stoploss:
     stoploss = -1  # Were letting the model decide when to sell
 
@@ -81,7 +82,6 @@ class AlexStrategyFinalV10(IStrategy):
     use_custom_stoploss = True
 
     startup_candle_count = 100
-    leverage_value = 5.0
                                                 
     prediction_metrics_storage = []  # Class-level storage for all pairs
 
