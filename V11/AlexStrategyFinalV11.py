@@ -57,6 +57,18 @@ class AlexStrategyFinalV11(IStrategy):
         },
     }
 
+    @property
+    def protections(self):
+        return [
+            {
+                "method": "StoplossGuard",
+                "lookback_period_candles": 1,  # 回看1根K线
+                "trade_limit": 1,              # 在回看期间内最多允许1次止损
+                "stop_duration_candles": 2,    # 触发保护后暂停2根K线
+                "only_per_pair": True         # 对当前交易对生效
+            }
+        ]
+
     # ROI table:
     minimal_roi = {
         "0": 0.339,    # 0分钟后，目标利润33.9%
