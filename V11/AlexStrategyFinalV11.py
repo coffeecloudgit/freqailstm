@@ -109,7 +109,7 @@ class AlexStrategyFinalV11(IStrategy):
 
     # 波动率计算参数
     volatility_lookback_hours = 12  # 波动率回看小时数
-    volatility_threshold = 4.3      # 波动率阈值（百分比）
+    volatility_threshold = 5.5      # 波动率阈值（百分比）
 
     from freqtrade.strategy import IntParameter, RealParameter, CategoricalParameter
 
@@ -621,8 +621,10 @@ class AlexStrategyFinalV11(IStrategy):
         # 根据波动率和交易时长动态计算ROI
         if is_high_volatility:
             # 高波动率策略：更激进的ROI
-            if trade_duration < 79:
-                return 0.339  # 33.9%
+            if trade_duration < 40:
+                return 0.289  # 28.9%
+            elif trade_duration < 79:
+                return 0.139  # 13.9%
             elif trade_duration < 121:
                 return 0.068  # 6.8%
             elif trade_duration < 191:
