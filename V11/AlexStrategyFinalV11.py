@@ -54,6 +54,12 @@ class AlexStrategyFinalV11(IStrategy):
                 "dynamic_long_threshold": {"color": "green", "plot_type": "line"},
                 "dynamic_short_threshold": {"color": "red", "plot_type": "line"},
             },
+            "Volatility": {
+                "volatility_12h": {"color": "purple", "plot_type": "line"},
+                "high_12h": {"color": "green", "plot_type": "line"},
+                "low_12h": {"color": "red", "plot_type": "line"},
+                "is_high_volatility": {"color": "orange", "plot_type": "scatter"},
+            },
         },
     }
 
@@ -80,6 +86,29 @@ class AlexStrategyFinalV11(IStrategy):
         "543": 0       # 543分钟后，目标利润0%
     }
 
+    # 高波动率ROI策略
+    high_volatility_roi = {
+        "0": 0.339,    # 0分钟后，目标利润33.9%
+        "79": 0.068,   # 79分钟后，目标利润6.8%
+        "121": 0.048,   # 121分钟后，目标利润4.8%
+        "191": 0.038,   # 191分钟后，目标利润3.8%
+        "231": 0.029,  # 231分钟后，目标利润2.9%
+        "331": 0.019,  # 331分钟后，目标利润1.9%
+        "543": 0       # 543分钟后，目标利润0%
+    }
+
+    # 低波动率ROI策略
+    low_volatility_roi = {
+        "0": 0.0339,    # 0分钟后，目标利润3.39%
+        "20": 0.031,   # 20分钟后，目标利润3.1%
+        "40": 0.029,   # 40分钟后，目标利润2.9%
+        "79": 0.025,   # 79分钟后，目标利润2.5%
+        "90": 0.021,   # 90分钟后，目标利润2.1%
+        "121": 0.018,   # 121分钟后，目标利润1.8%
+        "191": 0.01,   # 191分钟后，目标利润1%
+        "231": 0,  # 231分钟后，目标利润0%
+    }
+
     leverage_value = 5.0
     # Stoploss:
     stoploss = -1  # Were letting the model decide when to sell
@@ -99,6 +128,10 @@ class AlexStrategyFinalV11(IStrategy):
     startup_candle_count = 100
                                                 
     prediction_metrics_storage = []  # Class-level storage for all pairs
+
+    # 波动率计算参数
+    volatility_lookback_hours = 12  # 波动率回看小时数
+    volatility_threshold = 6.0      # 波动率阈值（百分比）
 
     from freqtrade.strategy import IntParameter, RealParameter, CategoricalParameter
 
@@ -288,6 +321,12 @@ class AlexStrategyFinalV11(IStrategy):
         dataframe["vol_rank"] = dataframe["volume"].rolling(24).rank(pct=True).fillna(0)
         dataframe["rolling_trend"] = dataframe["close"].pct_change(12).rolling(6).mean().fillna(0)
 
+        # 计算过去12小时的波动率
+        dataframe[f"high_{self.volatility_lookback_hours}h"] = dataframe["high"].rolling(self.volatility_lookback_hours).max()
+        dataframe[f"low_{self.volatility_lookback_hours}h"] = dataframe["low"].rolling(self.volatility_lookback_hours).min()
+        dataframe["volatility_12h"] = ((dataframe[f"high_{self.volatility_lookback_hours}h"] - dataframe[f"low_{self.volatility_lookback_hours}h"]) / dataframe[f"low_{self.volatility_lookback_hours}h"] * 100).fillna(0)
+        dataframe["is_high_volatility"] = dataframe["volatility_12h"] > self.volatility_threshold  # 波动率超过阈值为高波动
+
         atr_window = 100
         atr_min = dataframe["atr"].rolling(atr_window, min_periods=10).min()
         atr_max = dataframe["atr"].rolling(atr_window, min_periods=10).max()
@@ -399,6 +438,7 @@ class AlexStrategyFinalV11(IStrategy):
         atr = last_candle.get('atr', 0)
         historical_volatility = dataframe['close'].pct_change().rolling(50).std().iloc[-1] if not dataframe.empty else 0.01
         prediction_confidence = last_candle.get("prediction_confidence", 0.5)
+        is_high_volatility = last_candle.get("is_high_volatility", False)
 
         atr_multiplier = self.atr_multiplier.value * (
             2.0 + historical_volatility if current_profit > 0.03 else
@@ -412,7 +452,7 @@ class AlexStrategyFinalV11(IStrategy):
 
         dynamic_stoploss = current_rate + stoploss_buffer if trade.is_short else current_rate - stoploss_buffer
         
-        logger.info(f"Stoploss calculation for {pair}: current_profit={current_profit}, max_loss_pct={max_loss_pct}, atr_multiplier={atr_multiplier}")
+        logger.info(f"Stoploss calculation for {pair}: current_profit={current_profit}, max_loss_pct={max_loss_pct}, atr_multiplier={atr_multiplier}, is_high_volatility={is_high_volatility}")
 
         return -max_loss_pct if (trade.is_short and current_rate > trade.open_rate * (1 + max_loss_pct)) or \
                             (not trade.is_short and current_rate < trade.open_rate * (1 - max_loss_pct)) else dynamic_stoploss
@@ -583,3 +623,25 @@ class AlexStrategyFinalV11(IStrategy):
     
     def leverage(self, pair: str, current_time: 'datetime', current_rate: float, proposed_leverage: float, **kwargs) -> float:
         return self.leverage_value
+
+    def custom_roi(self, pair: str, trade: Trade, current_time: datetime, current_rate: float, current_profit: float, **kwargs) -> dict:
+        """
+        根据过去12小时的波动率动态选择ROI策略
+        这是Freqtrade官方推荐的动态ROI实现方式
+        """
+        dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
+        if dataframe is None or dataframe.empty:
+            return self.low_volatility_roi  # 默认使用低波动率策略
+        
+        last_candle = dataframe.iloc[-1]
+        volatility_12h = last_candle.get("volatility_12h", 0)
+        is_high_volatility = last_candle.get("is_high_volatility", False)
+        
+        logger.info(f"Custom ROI for {pair}: volatility_12h={volatility_12h:.2f}%, is_high_volatility={is_high_volatility}, current_profit={current_profit:.4f}")
+        
+        if is_high_volatility:
+            logger.info(f"Using high volatility ROI strategy for {pair}")
+            return self.high_volatility_roi
+        else:
+            logger.info(f"Using low volatility ROI strategy for {pair}")
+            return self.low_volatility_roi
