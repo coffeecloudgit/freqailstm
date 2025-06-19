@@ -86,29 +86,6 @@ class AlexStrategyFinalV11(IStrategy):
         "543": 0       # 543分钟后，目标利润0%
     }
 
-    # 高波动率ROI策略
-    high_volatility_roi = {
-        "0": 0.339,    # 0分钟后，目标利润33.9%
-        "79": 0.068,   # 79分钟后，目标利润6.8%
-        "121": 0.048,   # 121分钟后，目标利润4.8%
-        "191": 0.038,   # 191分钟后，目标利润3.8%
-        "231": 0.029,  # 231分钟后，目标利润2.9%
-        "331": 0.019,  # 331分钟后，目标利润1.9%
-        "543": 0       # 543分钟后，目标利润0%
-    }
-
-    # 低波动率ROI策略
-    low_volatility_roi = {
-        "0": 0.0359,    # 0分钟后，目标利润3.359%
-        "20": 0.031,   # 20分钟后，目标利润3.1%
-        "40": 0.025,   # 40分钟后，目标利润2.9%
-        "79": 0.023,   # 79分钟后，目标利润2.5%
-        "90": 0.021,   # 90分钟后，目标利润2.1%
-        "121": 0.018,   # 121分钟后，目标利润1.8%
-        "191": 0.01,   # 191分钟后，目标利润1%
-        "231": 0,  # 231分钟后，目标利润0%
-    }
-
     leverage_value = 5.0
     # Stoploss:
     stoploss = -1  # Were letting the model decide when to sell
@@ -124,6 +101,7 @@ class AlexStrategyFinalV11(IStrategy):
     use_exit_signal = True
     process_only_new_candles = True
     use_custom_stoploss = True
+    use_custom_roi = True  # 启用自定义ROI
 
     startup_candle_count = 100
                                                 
@@ -624,24 +602,54 @@ class AlexStrategyFinalV11(IStrategy):
     def leverage(self, pair: str, current_time: 'datetime', current_rate: float, proposed_leverage: float, **kwargs) -> float:
         return self.leverage_value
 
-    def custom_roi(self, pair: str, trade: Trade, current_time: datetime, current_rate: float, current_profit: float, **kwargs) -> dict:
+    def custom_roi(self, pair: str, trade: Trade, current_time: datetime, trade_duration: int,
+                   entry_tag: str | None, side: str, **kwargs) -> float | None:
         """
         根据过去12小时的波动率动态选择ROI策略
         这是Freqtrade官方推荐的动态ROI实现方式
         """
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
         if dataframe is None or dataframe.empty:
-            return self.low_volatility_roi  # 默认使用低波动率策略
+            return None  # 回退到minimal_roi逻辑
         
         last_candle = dataframe.iloc[-1]
         volatility_12h = last_candle.get("volatility_12h", 0)
         is_high_volatility = last_candle.get("is_high_volatility", False)
         
-        logger.info(f"Custom ROI for {pair}: volatility_12h={volatility_12h:.2f}%, is_high_volatility={is_high_volatility}, current_profit={current_profit:.4f}")
+        logger.info(f"Custom ROI for {pair}: volatility_12h={volatility_12h:.2f}%, is_high_volatility={is_high_volatility}, trade_duration={trade_duration}min")
         
+        # 根据波动率和交易时长动态计算ROI
         if is_high_volatility:
-            logger.info(f"Using high volatility ROI strategy for {pair}")
-            return self.high_volatility_roi
+            # 高波动率策略：更激进的ROI
+            if trade_duration < 79:
+                return 0.339  # 33.9%
+            elif trade_duration < 121:
+                return 0.068  # 6.8%
+            elif trade_duration < 191:
+                return 0.048  # 4.8%
+            elif trade_duration < 231:
+                return 0.038  # 3.8%
+            elif trade_duration < 331:
+                return 0.029  # 2.9%
+            elif trade_duration < 543:
+                return 0.019  # 1.9%
+            else:
+                return 0.0  # 0%
         else:
-            logger.info(f"Using low volatility ROI strategy for {pair}")
-            return self.low_volatility_roi
+            # 低波动率策略：更保守的ROI
+            if trade_duration < 20:
+                return 0.0359  # 3.59%
+            elif trade_duration < 40:
+                return 0.031  # 3.1%
+            elif trade_duration < 79:
+                return 0.025  # 2.5%
+            elif trade_duration < 90:
+                return 0.023  # 2.3%
+            elif trade_duration < 121:
+                return 0.021  # 2.1%
+            elif trade_duration < 191:
+                return 0.018  # 1.8%
+            elif trade_duration < 231:
+                return 0.01  # 1%
+            else:
+                return 0.0  # 0%
