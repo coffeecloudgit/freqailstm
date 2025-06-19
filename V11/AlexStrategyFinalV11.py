@@ -109,7 +109,7 @@ class AlexStrategyFinalV11(IStrategy):
 
     # 波动率计算参数
     volatility_lookback_hours = 12  # 波动率回看小时数
-    volatility_threshold = 3.1      # 波动率阈值（百分比）
+    volatility_threshold = 4.3      # 波动率阈值（百分比）
 
     from freqtrade.strategy import IntParameter, RealParameter, CategoricalParameter
 
