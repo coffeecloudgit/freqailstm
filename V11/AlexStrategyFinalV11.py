@@ -63,17 +63,17 @@ class AlexStrategyFinalV11(IStrategy):
         },
     }
 
-    @property
-    def protections(self):
-        return [
-            {
-                "method": "StoplossGuard",
-                "lookback_period_candles": 1,  # 回看1根K线
-                "trade_limit": 1,              # 在回看期间内最多允许1次止损
-                "stop_duration_candles": 3,    # 触发保护后暂停3根K线
-                "only_per_pair": True         # 对当前交易对生效
-            }
-        ]
+    # @property
+    # def protections(self):
+    #     return [
+    #         {
+    #             "method": "StoplossGuard",
+    #             "lookback_period_candles": 4,  # 回看1根K线
+    #             "trade_limit": 2,              # 在回看期间内最多允许2次止损
+    #             "stop_duration_candles": 5,    # 触发保护后暂停3根K线
+    #             "only_per_pair": True         # 对当前交易对生效
+    #         }
+    #     ]
 
     # ROI table:
     minimal_roi = {
@@ -99,10 +99,10 @@ class AlexStrategyFinalV11(IStrategy):
 
     # 低波动率ROI策略
     low_volatility_roi = {
-        "0": 0.0339,    # 0分钟后，目标利润3.39%
+        "0": 0.0359,    # 0分钟后，目标利润3.359%
         "20": 0.031,   # 20分钟后，目标利润3.1%
-        "40": 0.029,   # 40分钟后，目标利润2.9%
-        "79": 0.025,   # 79分钟后，目标利润2.5%
+        "40": 0.025,   # 40分钟后，目标利润2.9%
+        "79": 0.023,   # 79分钟后，目标利润2.5%
         "90": 0.021,   # 90分钟后，目标利润2.1%
         "121": 0.018,   # 121分钟后，目标利润1.8%
         "191": 0.01,   # 191分钟后，目标利润1%
