@@ -76,15 +76,15 @@ class AlexStrategyFinalV11(IStrategy):
     #     ]
 
     # ROI table:
-    minimal_roi = {
-        "0": 0.339,    # 0分钟后，目标利润33.9%
-        "79": 0.068,   # 79分钟后，目标利润6.8%
-        "121": 0.048,   # 121分钟后，目标利润4.8%
-        "191": 0.038,   # 191分钟后，目标利润3.8%
-        "231": 0.029,  # 231分钟后，目标利润2.9%
-        "331": 0.019,  # 331分钟后，目标利润1.9%
-        "543": 0       # 543分钟后，目标利润0%
-    }
+    # minimal_roi = {
+    #     "0": 0.339,    # 0分钟后，目标利润33.9%
+    #     "79": 0.068,   # 79分钟后，目标利润6.8%
+    #     "121": 0.048,   # 121分钟后，目标利润4.8%
+    #     "191": 0.038,   # 191分钟后，目标利润3.8%
+    #     "231": 0.029,  # 231分钟后，目标利润2.9%
+    #     "331": 0.019,  # 331分钟后，目标利润1.9%
+    #     "543": 0       # 543分钟后，目标利润0%
+    # }
 
     leverage_value = 5.0
     # Stoploss:
@@ -109,7 +109,7 @@ class AlexStrategyFinalV11(IStrategy):
 
     # 波动率计算参数
     volatility_lookback_hours = 12  # 波动率回看小时数
-    volatility_threshold = 6.0      # 波动率阈值（百分比）
+    volatility_threshold = 3.1      # 波动率阈值（百分比）
 
     from freqtrade.strategy import IntParameter, RealParameter, CategoricalParameter
 
@@ -642,14 +642,16 @@ class AlexStrategyFinalV11(IStrategy):
             elif trade_duration < 40:
                 return 0.031  # 3.1%
             elif trade_duration < 79:
-                return 0.025  # 2.5%
-            elif trade_duration < 90:
-                return 0.023  # 2.3%
-            elif trade_duration < 121:
                 return 0.021  # 2.1%
-            elif trade_duration < 191:
+            elif trade_duration < 90:
                 return 0.018  # 1.8%
-            elif trade_duration < 231:
+            elif trade_duration < 121:
+                return 0.015  # 1.5%
+            elif trade_duration < 191:
                 return 0.01  # 1%
+            elif trade_duration < 231:
+                return 0.005  # 0.5%
+            elif trade_duration < 331:
+                return 0.002  # 0.2%
             else:
                 return 0.0  # 0%
