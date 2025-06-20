@@ -719,8 +719,9 @@ class AlexStrategyFinalV11(IStrategy):
         """
         自定义退出逻辑
         """
-        # 交易结束时清理缓存
-        if pair in self._last_stoploss_times:
+        # 只在交易真正结束时才清理缓存（当交易状态为关闭时）
+        if trade.is_closed and pair in self._last_stoploss_times:
             del self._last_stoploss_times[pair]
+            logger.info(f"🗑️ 交易 {pair} 已结束，清理缓存")
         
         return None
