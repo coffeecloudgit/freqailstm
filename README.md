@@ -210,3 +210,47 @@ Contributions to the project are welcome! If you find any issues or have suggest
 issue or submit a pull request on the [GitHub repository](https://github.com/AlexCryptoKing/freqailstm.git).
 
 
+```python
+Best result:
+
+    35/100:   9827 trades. 6399/12/3416 Wins/Draws/Losses. Avg profit   0.67%. Median profit   1.50%. Total profit 4296.91988925 USDT ( 429.69%). Avg duration 1:46:00 min. Objective: -131
+.40184
+
+
+    # Buy hyperspace params:
+    buy_params = {
+        "confidence_threshold_multiplier": 0.51115,
+        "dynamic_long_threshold_multiplier": 0.94728,
+        "dynamic_short_threshold_multiplier": 0.9477,
+        "rolling_trend_threshold_multiplier": 1.01779,
+        "stake_scaling_factor": 1.5,
+    }
+
+    # Sell hyperspace params:
+    sell_params = {
+        "atr_multiplier": 1.81397,
+        "base_risk": 0.04342,
+        "dynamic_exit_threshold_multiplier": 1.03184,
+        "exit_trend_threshold_multiplier": 0.38391,
+        "max_risk_per_trade_multiplier": 0.01, 
+        "max_trade_duration_long": 6,
+        "max_trade_duration_short": 2,
+        "timed_exit_long_threshold": 26,
+        "timed_exit_short_threshold": 15,
+    }
+
+    # Stoploss:
+    stoploss = -1.0  # value loaded from strategy
+
+    # Trailing stop:
+    trailing_stop = False  # value loaded from strategy
+    trailing_stop_positive = 0.001  # value loaded from strategy
+    trailing_stop_positive_offset = 0.0139  # value loaded from strategy
+    trailing_only_offset_is_reached = True  # value loaded from strategy
+     
+
+    # Max Open Trades:
+    max_open_trades = 20  # value loaded from strategy
+```
+
+
