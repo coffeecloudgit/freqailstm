@@ -12,7 +12,13 @@ This project aims to develop a trading model that utilizes a dynamic weighting a
 
 ## Quick Start
 
-1. Clone the repository
+0. install freqtrade
+```shell
+pip install -r requirements-hyperopt.txt
+
+```
+
+2. Clone the repository
 
 ```shell
 cd /opt/raid0/ft/
@@ -79,9 +85,12 @@ fi
 ```shell
 freqtrade download-data -c user_data/config-torch.json --timerange 20230101-20250611 --timeframe 15m 1h 2h 4h 1d --erase
 
-freqtrade backtesting -c user_data/config-torch.json --breakdown day week month --timerange 20250301-20250611 2>&1 | tee user_data/backtest_res001.txt
+freqtrade hyperopt -s AlexStrategyFinalV11 --freqaimodel PyTorchLSTMRegressor -c user_data/config-torch.json --timerange 20250301-20250620 --hyperopt-loss SharpeHyperOptLoss --spaces "buy sell"
 
-freqtrade trade --strategy AlexStrategyFinalV8 --config user_data/config-torch.json --freqaimodel PyTorchLSTMRegressor
+
+freqtrade backtesting -c user_data/config-torch.json --breakdown day week month --timerange 20250301-20250620 2>&1 | tee user_data/backtest_res001.txt
+
+freqtrade trade --strategy AlexStrategyFinalV11 --config user_data/config-torch.json --freqaimodel PyTorchLSTMRegressor
 ```
 
 4. Edit "freqtrade/configuration/config_validation.py"
