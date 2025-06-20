@@ -442,7 +442,9 @@ class AlexStrategyFinalV11(IStrategy):
         # 检查是否满足30分钟检查间隔
         if pair in self._last_stoploss_times:
             time_diff = current_time - self._last_stoploss_times[pair]
-            if time_diff < pd.Timedelta(minutes=self.stoploss_check_interval_minutes):
+            interval_minutes = self.stoploss_check_interval_minutes
+            logger.info(f"Checking time interval for {pair}: time_diff={time_diff}, interval_minutes={interval_minutes}")
+            if time_diff.total_seconds() < interval_minutes * 60:
                 logger.info(f"Time interval not met for {pair}, returning default stoploss, time since last check: {time_diff}, stoploss: {self.stoploss}")
                 return self.stoploss
 
