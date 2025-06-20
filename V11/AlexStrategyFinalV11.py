@@ -136,7 +136,6 @@ class AlexStrategyFinalV11(IStrategy):
 
     # 止损检查参数
     stoploss_check_interval_minutes = 30  # 止损检查间隔（分钟）
-    _last_stoploss_times = {}   # 存储每个交易对的最后检查时间
 
     from freqtrade.strategy import IntParameter, RealParameter, CategoricalParameter
 
@@ -158,6 +157,15 @@ class AlexStrategyFinalV11(IStrategy):
     # ✅ Categorical Parameters (Fixed choices)
     stake_scaling_factor = CategoricalParameter([0.4, 0.75, 1.0, 1.25, 1.5], default=1.0, space='buy')  
     max_risk_per_trade_multiplier = CategoricalParameter([0.01, 0.02, 0.03], default=0.02, space='sell')  
+
+    def __init__(self, config: dict) -> None:
+        """
+        初始化策略，设置实例变量
+        """
+        super().__init__(config)
+        # 初始化止损时间跟踪字典
+        self._last_stoploss_times = {}
+        logger.info("✅ 策略初始化完成，_last_stoploss_times 已重置")
 
     def feature_engineering_expand_all(self, dataframe: pd.DataFrame, period: int, metadata: Dict, **kwargs):
         """
@@ -435,6 +443,9 @@ class AlexStrategyFinalV11(IStrategy):
 
     def custom_stoploss(self, pair: str, trade: 'Trade', current_time: datetime, current_rate: float,
                         current_profit: float, **kwargs) -> float:
+        # 添加调试信息
+        logger.info(f"🔍 custom_stoploss called for {pair}, _last_stoploss_times keys: {list(self._last_stoploss_times.keys())}")
+        
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
         if dataframe is None or dataframe.empty:
             return self.stoploss
@@ -447,6 +458,8 @@ class AlexStrategyFinalV11(IStrategy):
             if time_diff.total_seconds() < interval_minutes * 60:
                 logger.info(f"Time interval not met for {pair}, returning default stoploss, time since last check: {time_diff}, stoploss: {self.stoploss}")
                 return self.stoploss
+        else:
+            logger.info(f"First time calling custom_stoploss for {pair}, will calculate new stoploss")
 
         # 重新计算止损值
         last_candle = dataframe.iloc[-1]
