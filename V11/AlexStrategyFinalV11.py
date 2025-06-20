@@ -135,7 +135,7 @@ class AlexStrategyFinalV11(IStrategy):
     volatility_threshold = 5.5      # 波动率阈值（百分比）
 
     # 止损检查参数
-    stoploss_check_interval_minutes = 30  # 止损检查间隔（分钟）
+    stoploss_check_interval_minutes = 60  # 止损检查间隔（分钟）
 
     from freqtrade.strategy import IntParameter, RealParameter, CategoricalParameter
 
@@ -720,7 +720,7 @@ class AlexStrategyFinalV11(IStrategy):
         自定义退出逻辑
         """
         # 只在交易真正结束时才清理缓存（当交易状态为关闭时）
-        if trade.is_closed and pair in self._last_stoploss_times:
+        if not trade.is_open and pair in self._last_stoploss_times:
             del self._last_stoploss_times[pair]
             logger.info(f"🗑️ 交易 {pair} 已结束，清理缓存")
         
