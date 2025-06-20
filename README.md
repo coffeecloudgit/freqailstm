@@ -85,6 +85,7 @@ fi
 ```shell
 freqtrade download-data -c user_data/config-torch.json --timerange 20230101-20250611 --timeframe 15m 1h 2h 4h 1d --erase
 
+
 freqtrade hyperopt -s AlexStrategyFinalV11 --freqaimodel PyTorchLSTMRegressor -c user_data/config-torch.json --timerange 20250301-20250620 --hyperopt-loss SharpeHyperOptLoss --spaces "buy sell"
 
 
