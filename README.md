@@ -253,5 +253,24 @@ Best result:
     max_open_trades = 20  # value loaded from strategy
 ```
      
-
+ID    Pair    Amount    Stake amount    Open rate    Current rate    Current profit %    Open date
+	
+381 | Long	BTC/USDT:USDT	0.001	20.92 (5x)	104600	104658.8	
+-0.22% (-0.046)
+	2025-06-20 14:00:49	
+382 | Long	ETH/USDT:USDT	0.011	5.533 (5x)	2514.84	2518.76	
+0.28% (0.015)
+	2025-06-20 14:00:52	
+383 | Short	LTC/USDT:USDT	2.39	40.482 (5x)	84.69	84.84	
+-1.39% (-0.561)
+	2025-06-20 14:00:55	
+384 | Long	BNB/USDT:USDT	0.09	11.594 (5x)	644.12	644.66	
+-0.08% (-0.009)
+	2025-06-20 14:00:58	
+385 | Long	SOL/USDT:USDT	0.67	19.476 (5x)	145.34	145.44	
+-0.16% (-0.03)
+	2025-06-20 14:01:01	
+386 | Long	FIL/USDT:USDT	213.1	99.987 (5x)	2.346	2.347	
+-0.29% (-0.287)
+	2025-06-20 14:01:04
 
