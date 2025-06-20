@@ -86,6 +86,29 @@ class AlexStrategyFinalV11(IStrategy):
     #     "543": 0       # 543分钟后，目标利润0%
     # }
 
+       # Buy hyperspace params:
+    buy_params = {
+        "confidence_threshold_multiplier": 0.51115,
+        "dynamic_long_threshold_multiplier": 0.94728,
+        "dynamic_short_threshold_multiplier": 0.9477,
+        "rolling_trend_threshold_multiplier": 1.01779,
+        "stake_scaling_factor": 1.5,
+    }
+
+    # Sell hyperspace params:
+    sell_params = {
+        "atr_multiplier": 1.81397,
+        "base_risk": 0.04342,
+        "dynamic_exit_threshold_multiplier": 1.03184,
+        "exit_trend_threshold_multiplier": 0.38391,
+        "max_risk_per_trade_multiplier": 0.01, 
+        "max_trade_duration_long": 6,
+        "max_trade_duration_short": 2,
+        "timed_exit_long_threshold": 26,
+        "timed_exit_short_threshold": 15,
+    }
+     
+    # Max Open Trades:
     leverage_value = 5.0
     # Stoploss:
     stoploss = -1  # Were letting the model decide when to sell

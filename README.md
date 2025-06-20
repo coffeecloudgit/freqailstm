@@ -86,12 +86,12 @@ fi
 freqtrade download-data -c user_data/config-torch.json --timerange 20230101-20250611 --timeframe 15m 1h 2h 4h 1d --erase
 
 
-freqtrade hyperopt -s AlexStrategyFinalV11 --freqaimodel PyTorchLSTMRegressor -c user_data/config-torch.json --timerange 20250301-20250620 --hyperopt-loss SharpeHyperOptLoss --spaces "buy sell"
+freqtrade hyperopt -s AlexStrategyFinalV11 --freqaimodel PyTorchLSTMRegressor -c user_data/config-torch.json --timerange 20250301-20250620 --hyperopt-loss SharpeHyperOptLoss --spaces "buy sell" 2>&1 | tee user_data/hyperopt001.txt
 
 
 freqtrade backtesting -c user_data/config-torch.json --breakdown day week month --timerange 20250301-20250620 2>&1 | tee user_data/backtest_res001.txt
 
-freqtrade trade --strategy AlexStrategyFinalV11 --config user_data/config-torch.json --freqaimodel PyTorchLSTMRegressor
+freqtrade trade --strategy AlexStrategyFinalV11 --config user_data/config-torch.json --freqaimodel PyTorchLSTMRegressor 2>&1 | tee user_data/trade001.log
 ```
 
 4. Edit "freqtrade/configuration/config_validation.py"
