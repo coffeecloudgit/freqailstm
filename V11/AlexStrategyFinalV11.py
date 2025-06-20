@@ -1,6 +1,6 @@
 import logging
 from functools import reduce
-from typing import Dict
+from typing import Dict, Optional
 import joblib
 import os
 from datetime import datetime
@@ -134,6 +134,10 @@ class AlexStrategyFinalV11(IStrategy):
     volatility_lookback_hours = 12  # 波动率回看小时数
     volatility_threshold = 5.5      # 波动率阈值（百分比）
 
+    # 止损检查参数
+    stoploss_check_interval_minutes = 30  # 止损检查间隔（分钟）
+    _last_stoploss_times = {}   # 存储每个交易对的最后检查时间
+
     from freqtrade.strategy import IntParameter, RealParameter, CategoricalParameter
 
     # ✅ Hyperopt Parameters
@@ -147,10 +151,10 @@ class AlexStrategyFinalV11(IStrategy):
     base_risk = RealParameter(0.005, 0.05, default=0.02, space='sell')  
     rolling_trend_threshold_multiplier = RealParameter(0.7, 1.3, default=1.0, space='buy')
     # ✅ Integer Parameters (Stepwise tuning)
-    timed_exit_long_threshold = IntParameter(10, 30, default=20, space='sell')  
-    timed_exit_short_threshold = IntParameter(10, 30, default=20, space='sell')  
-    max_trade_duration_long = IntParameter(1, 7, default=2, space='sell')  
-    max_trade_duration_short = IntParameter(1, 5, default=1, space='sell')  
+    timed_exit_long_threshold = IntParameter(10, 30, default=20, space='sell')
+    timed_exit_short_threshold = IntParameter(10, 30, default=20, space='sell')
+    max_trade_duration_long = IntParameter(1, 7, default=2, space='sell')
+    max_trade_duration_short = IntParameter(1, 5, default=1, space='sell')
     # ✅ Categorical Parameters (Fixed choices)
     stake_scaling_factor = CategoricalParameter([0.4, 0.75, 1.0, 1.25, 1.5], default=1.0, space='buy')  
     max_risk_per_trade_multiplier = CategoricalParameter([0.01, 0.02, 0.03], default=0.02, space='sell')  
@@ -435,6 +439,14 @@ class AlexStrategyFinalV11(IStrategy):
         if dataframe is None or dataframe.empty:
             return self.stoploss
 
+        # 检查是否满足30分钟检查间隔
+        if pair in self._last_stoploss_times:
+            time_diff = current_time - self._last_stoploss_times[pair]
+            if time_diff < pd.Timedelta(minutes=self.stoploss_check_interval_minutes):
+                logger.info(f"Time interval not met for {pair}, returning default stoploss, time since last check: {time_diff}, stoploss: {self.stoploss}")
+                return self.stoploss
+
+        # 重新计算止损值
         last_candle = dataframe.iloc[-1]
         atr = last_candle.get('atr', 0)
         historical_volatility = dataframe['close'].pct_change().rolling(50).std().iloc[-1] if not dataframe.empty else 0.01
@@ -453,10 +465,16 @@ class AlexStrategyFinalV11(IStrategy):
 
         dynamic_stoploss = current_rate + stoploss_buffer if trade.is_short else current_rate - stoploss_buffer
         
-        logger.info(f"Stoploss calculation for {pair}: current_profit={current_profit}, max_loss_pct={max_loss_pct}, atr_multiplier={atr_multiplier}, is_high_volatility={is_high_volatility}")
+        logger.info(f"Stoploss calculation for {pair}: current_profit={current_profit}, max_loss_pct={max_loss_pct}, atr_multiplier={atr_multiplier}, is_high_volatility={is_high_volatility}, current_time={current_time}")
 
-        return -max_loss_pct if (trade.is_short and current_rate > trade.open_rate * (1 + max_loss_pct)) or \
+        # 计算最终止损值
+        final_stoploss = -max_loss_pct if (trade.is_short and current_rate > trade.open_rate * (1 + max_loss_pct)) or \
                             (not trade.is_short and current_rate < trade.open_rate * (1 - max_loss_pct)) else dynamic_stoploss
+
+        # 更新最后检查时间
+        self._last_stoploss_times[pair] = current_time
+
+        return final_stoploss
     
     def custom_stake_amount(self, pair: str, current_time: datetime, current_rate: float, proposed_stake: float,
                             min_stake: float | None, max_stake: float, leverage: float, entry_tag: str | None, side: str, **kwargs) -> float:
@@ -680,3 +698,14 @@ class AlexStrategyFinalV11(IStrategy):
                 return 0.002  # 0.2%
             else:
                 return 0.0  # 0%
+
+    def custom_exit(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
+                    current_profit: float, **kwargs) -> Optional[str]:
+        """
+        自定义退出逻辑
+        """
+        # 交易结束时清理缓存
+        if pair in self._last_stoploss_times:
+            del self._last_stoploss_times[pair]
+        
+        return None
