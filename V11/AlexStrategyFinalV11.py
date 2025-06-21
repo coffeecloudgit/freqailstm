@@ -165,7 +165,9 @@ class AlexStrategyFinalV11(IStrategy):
         super().__init__(config)
         # 初始化止损时间跟踪字典
         self._last_stoploss_times = {}
-        logger.info("✅ 策略初始化完成，_last_stoploss_times 已重置")
+        # 初始化K线时间跟踪字典
+        self._last_candle_times = {}
+        logger.info("✅ 策略初始化完成，_last_stoploss_times 和 _last_candle_times 已重置")
 
     def feature_engineering_expand_all(self, dataframe: pd.DataFrame, period: int, metadata: Dict, **kwargs):
         """
@@ -450,30 +452,36 @@ class AlexStrategyFinalV11(IStrategy):
         if dataframe is None or dataframe.empty:
             return self.stoploss
 
-        # 检查当前交易方向是否与最新预测方向一致
+        # 检查是否有新K线产生
         last_candle = dataframe.iloc[-1]
+        current_candle_time = last_candle.get('date')
+        # 检查当前交易方向是否与最新预测方向一致
         latest_prediction = last_candle.get("&-s_target", 0)
         
-        # 判断预测方向：正值表示看涨，负值表示看跌
-        prediction_direction = 1 if latest_prediction > 0 else -1
-        # 判断交易方向：多头为1，空头为-1
-        trade_direction = -1 if trade.is_short else 1
-        
-        # 如果方向一致，直接返回默认止损
-        if prediction_direction == trade_direction:
-            logger.info(f"✅ {pair} 交易方向与预测方向一致 (预测:{prediction_direction}, 交易:{trade_direction}), 返回默认止损: {self.stoploss}, latest_prediction: {latest_prediction}, trade_direction: {trade_direction}")
-            return self.stoploss
-
-        # 检查是否满足60分钟检查间隔
-        if pair in self._last_stoploss_times:
-            time_diff = current_time - self._last_stoploss_times[pair]
-            interval_minutes = self.stoploss_check_interval_minutes
-            logger.info(f"Checking time interval for {pair}: time_diff={time_diff}, interval_minutes={interval_minutes}, latest_prediction: {latest_prediction}")
-            if time_diff.total_seconds() < interval_minutes * 60:
-                logger.info(f"Time interval not met for {pair}, returning default stoploss, time since last check: {time_diff}, stoploss: {self.stoploss}")
+        if pair in self._last_candle_times:
+            last_candle_time = self._last_candle_times[pair]
+            if current_candle_time == last_candle_time:
+                logger.info(f"⏰ {pair} 没有新K线产生，返回默认止损: {self.stoploss}, latest_prediction: {latest_prediction}")
                 return self.stoploss
         else:
-            logger.info(f"First time calling custom_stoploss for {pair}, will calculate new stoploss")
+            logger.info(f"🆕 {pair} 第一次调用custom_stoploss，记录K线时间: {current_candle_time}, latest_prediction: {latest_prediction}")
+        
+        # 更新K线时间
+        self._last_candle_times[pair] = current_candle_time
+
+
+    
+
+        # 检查是否满足60分钟检查间隔
+        # if pair in self._last_stoploss_times:
+        #     time_diff = current_time - self._last_stoploss_times[pair]
+        #     interval_minutes = self.stoploss_check_interval_minutes
+        #     logger.info(f"Checking time interval for {pair}: time_diff={time_diff}, interval_minutes={interval_minutes}, latest_prediction: {latest_prediction}")
+        #     if time_diff.total_seconds() < interval_minutes * 60:
+        #         logger.info(f"Time interval not met for {pair}, returning default stoploss, time since last check: {time_diff}, stoploss: {self.stoploss}")
+        #         return self.stoploss
+        # else:
+        #     logger.info(f"First time calling custom_stoploss for {pair}, will calculate new stoploss")
 
         # 重新计算止损值
         atr = last_candle.get('atr', 0)
@@ -735,6 +743,11 @@ class AlexStrategyFinalV11(IStrategy):
         # 只在交易真正结束时才清理缓存（当交易状态为关闭时）
         if not trade.is_open and pair in self._last_stoploss_times:
             del self._last_stoploss_times[pair]
-            logger.info(f"🗑️ 交易 {pair} 已结束，清理缓存")
+            logger.info(f"🗑️ 交易 {pair} 已结束，清理止损时间缓存")
+        
+        # 清理K线时间缓存
+        if not trade.is_open and pair in self._last_candle_times:
+            del self._last_candle_times[pair]
+            logger.info(f"🗑️ 交易 {pair} 已结束，清理K线时间缓存")
         
         return None
