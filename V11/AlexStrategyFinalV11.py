@@ -450,11 +450,25 @@ class AlexStrategyFinalV11(IStrategy):
         if dataframe is None or dataframe.empty:
             return self.stoploss
 
-        # 检查是否满足30分钟检查间隔
+        # 检查当前交易方向是否与最新预测方向一致
+        last_candle = dataframe.iloc[-1]
+        latest_prediction = last_candle.get("&-s_target", 0)
+        
+        # 判断预测方向：正值表示看涨，负值表示看跌
+        prediction_direction = 1 if latest_prediction > 0 else -1
+        # 判断交易方向：多头为1，空头为-1
+        trade_direction = -1 if trade.is_short else 1
+        
+        # 如果方向一致，直接返回默认止损
+        if prediction_direction == trade_direction:
+            logger.info(f"✅ {pair} 交易方向与预测方向一致 (预测:{prediction_direction}, 交易:{trade_direction}), 返回默认止损: {self.stoploss}, latest_prediction: {latest_prediction}, trade_direction: {trade_direction}")
+            return self.stoploss
+
+        # 检查是否满足60分钟检查间隔
         if pair in self._last_stoploss_times:
             time_diff = current_time - self._last_stoploss_times[pair]
             interval_minutes = self.stoploss_check_interval_minutes
-            logger.info(f"Checking time interval for {pair}: time_diff={time_diff}, interval_minutes={interval_minutes}")
+            logger.info(f"Checking time interval for {pair}: time_diff={time_diff}, interval_minutes={interval_minutes}, latest_prediction: {latest_prediction}")
             if time_diff.total_seconds() < interval_minutes * 60:
                 logger.info(f"Time interval not met for {pair}, returning default stoploss, time since last check: {time_diff}, stoploss: {self.stoploss}")
                 return self.stoploss
@@ -462,7 +476,6 @@ class AlexStrategyFinalV11(IStrategy):
             logger.info(f"First time calling custom_stoploss for {pair}, will calculate new stoploss")
 
         # 重新计算止损值
-        last_candle = dataframe.iloc[-1]
         atr = last_candle.get('atr', 0)
         historical_volatility = dataframe['close'].pct_change().rolling(50).std().iloc[-1] if not dataframe.empty else 0.01
         prediction_confidence = last_candle.get("prediction_confidence", 0.5)
@@ -680,7 +693,7 @@ class AlexStrategyFinalV11(IStrategy):
             if trade_duration < 40:
                 return 0.289  # 28.9%
             elif trade_duration < 79:
-                return 0.139  # 13.9%
+                return 0.189  # 18.9%
             elif trade_duration < 121:
                 return 0.068  # 6.8%
             elif trade_duration < 191:
